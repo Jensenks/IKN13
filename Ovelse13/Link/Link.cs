@@ -17,11 +17,11 @@ namespace Linklaget
 		/// <summary>
 		/// The DELIMITE for slip protocol.
 		/// </summary>
-		const byte DELIMITER = (byte)'A';
+		const byte Delimiter = (byte)'A';
 		/// <summary>
 		/// The buffer for link.
 		/// </summary>
-		private byte[] buffer;
+		private byte[] _buffer;
 		/// <summary>
 		/// The serial port.
 		/// </summary>
@@ -30,7 +30,7 @@ namespace Linklaget
 		/// <summary>
 		/// Initializes a new instance of the <see cref="link"/> class.
 		/// </summary>
-		public Link (int BUFSIZE)
+		public Link (int bufsize)
 		{
 			// Create a new SerialPort object with default settings.
 			serialPort = new SerialPort("/dev/ttyS1",115200,Parity.None,8,StopBits.One);
@@ -38,7 +38,7 @@ namespace Linklaget
 			if(!serialPort.IsOpen)
 				serialPort.Open();
 
-			buffer = new byte[(BUFSIZE*2)+2];
+			_buffer = new byte[(bufsize*2)+2];
 		}
 
 		/// <summary>
@@ -69,8 +69,8 @@ namespace Linklaget
 				}
 			}
             // Framing
-            list.Insert(0, DELIMITER);
-            list.Add(DELIMITER);
+            list.Insert(0, Delimiter);
+            list.Add(Delimiter);
 
 			serialPort.Write (list.ToArray (), 0, list.Count);
 		}

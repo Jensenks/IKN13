@@ -36,10 +36,7 @@ namespace Library
 		/// </param>
 		public static long check_File_Exists (String fileName)
 		{
-			if (File.Exists (fileName))
-				return (new FileInfo(fileName)).Length;
-
-			return 0;
+		    return !File.Exists(fileName) ? 0 : (new FileInfo(fileName)).Length;
 		}
 	}
 }

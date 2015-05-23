@@ -10,26 +10,24 @@ namespace Application
 {
 	class file_client
 	{	
-		const int PORT = 9000;
+		const int Bufsize = 1000;
 
-		const int BUFSIZE = 1000;
-
-		private int procentageOld = 0;
+		private int _progress = 0;
 
 		private file_client (string[] args)
 		{
-			var trans = new Transport (BUFSIZE);
-			trans.send (GetBytes(args[0]), args[0].Length);	//Asking for file stored in args[0]
+			var trans = new Transport (Bufsize);
+			trans.send (GetBytes(args[0]), args[0].Length);
 
 			Console.WriteLine ("Asking server for file: " + args [0]);
 
-			receiveFile (LIB.extractFileName (args [0]), trans);
+			receiveFile (LIB.ExtractFileName (args [0]), trans);
 		}
 
 
 		private void receiveFile (String fileName, Transport transport)
 		{
-			byte[] fileSize = new byte[BUFSIZE];
+			var fileSize = new byte[Bufsize];
 
 			transport.receive (ref fileSize);	//Receives the file size
 			var fileSizeStr = GetString (fileSize).Trim ('\0');
@@ -39,7 +37,7 @@ namespace Application
 			} else {			
 				var fs = File.Open (fileName, FileMode.Create);
 
-				var buffer = new byte[BUFSIZE];
+				var buffer = new byte[Bufsize];
 				var offset = 0;
 				while (offset < int.Parse(fileSizeStr)) {
 					var bytesRead = transport.receive (ref buffer);
@@ -50,10 +48,10 @@ namespace Application
 					//PROGRESS BAR
 					int procentage = (int)((double)offset / double.Parse (fileSizeStr) * 100);
 
-					if (procentage > procentageOld) {
+					if (procentage > _procentageOld) {
 						drawTextProgressBar (procentage, 100);
 						//Console.WriteLine (procentage);
-						procentageOld = procentage;
+						_procentageOld = procentage;
 					}
 
 
