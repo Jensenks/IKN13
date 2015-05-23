@@ -20,7 +20,7 @@ namespace Library
 		/// <param name='fileName'>
 		/// Filename with path.
 		/// </param>
-		public static String extractFileName(String fileName)
+		public static String ExtractFileName(String fileName)
     	{
     		return (fileName.LastIndexOf('/')==0 ? fileName : fileName.Substring(fileName.LastIndexOf('/')+1));
     	}
