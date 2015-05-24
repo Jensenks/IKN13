@@ -50,13 +50,6 @@ namespace Transportlaget
 		{
 			var ackBuf = new byte[(int)TransSize.ACKSIZE];
 
-			//Testing
-            _ackCount++;
-            if (_ackCount == 30)
-            {
-				_buffer [12]++;
-			}
-
 			ackBuf [(int)TransCHKSUM.SEQNO] = (byte)
 				(ackType ? (byte)_buffer [(int)TransCHKSUM.SEQNO] : (byte)(_buffer[(int)TransCHKSUM.SEQNO] + 1) % 2); // Fejl rettet
 			ackBuf [(int)TransCHKSUM.TYPE] = (byte)(int)TransType.ACK;

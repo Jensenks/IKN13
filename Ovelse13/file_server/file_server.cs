@@ -21,17 +21,17 @@ namespace Application
 		{
 			Console.WriteLine ("Server started...");
 			var trans = new Transport (BUFSIZE);
-			byte[] buf = new byte[BUFSIZE];
+			var buf = new byte[BUFSIZE];
 			while (true) {
-				Console.WriteLine ("Awaiting client");
+				Console.WriteLine ("Waiting for client");
 				trans.receive (ref buf);
 				var str = GetString (buf).Trim ('\0');
 				Console.WriteLine ("Client is asking for file: " + str);
 
 				var curFileSize = LIB.check_File_Exists (str); //Returns 0 if failed else file size
 				if (curFileSize == 0) {
-					Console.WriteLine ("Could'nt find file");
-					trans.send (GetBytes ("Fejl40"), 6);
+					Console.WriteLine ("File does not exist");
+					trans.send (GetBytes ("NOFILE"), 6);
 				} else {
 					sendFile (str, curFileSize, trans);
 				}
