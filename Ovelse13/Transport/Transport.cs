@@ -66,17 +66,6 @@ namespace Transportlaget
 
 			_checksum.calcChecksum (ref _buffer, size +4);
 			do {
-				//Testing
-                _errorCount++;
-                if (_errorCount == 30)
-                {
-					_buffer [120]++;	//Laver en fejl i bufferen
-				}
-                if (_errorCount == 31)
-                {
-					_buffer[120]--;	//Retter fejlen tilbage igen
-				}
-
 				_link.Send (_buffer, size + 4);
 			} while (!receiveAck());
 		}
