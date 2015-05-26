@@ -11,37 +11,38 @@ namespace Transportlaget
 	/// </summary>
 	public class Transport
 	{
-		private int _ackCount;
-		private readonly Link _link;
-		private readonly Checksum _checksum;
-		private byte[] _buffer;
-		private byte _seqNo;
-		private byte _oldSeqNo;
-		private int _errorCount;
-		private const int DefaultSeqno = 2;
+	    private readonly Link link;
+		private readonly Checksum checksum;
+		private byte[] buffer;
+		private byte seqNo;
+		private byte oldSeqNo;
+		private int errorCount;
+        private const int DEFAULT_SEQNO = 2;
 
+	    private int errorCounter;
+	    private int errorCounter2;
 		public Transport (int BUFSIZE)
 		{
-			_link = new Link(BUFSIZE+(int)TransSize.ACKSIZE);
-			_checksum = new Checksum();
-			_buffer = new byte[BUFSIZE+(int)TransSize.ACKSIZE];
-			_seqNo = 0;
-			_oldSeqNo = DefaultSeqno;
-			_errorCount = 0;
+			link = new Link(BUFSIZE+(int)TransSize.ACKSIZE);
+			checksum = new Checksum();
+			buffer = new byte[BUFSIZE+(int)TransSize.ACKSIZE];
+			seqNo = 0;
+			oldSeqNo = DEFAULT_SEQNO;
+			errorCount = 0;
 		}
 
 		private bool receiveAck()
 		{
 			var buf = new byte[(int)TransSize.ACKSIZE];
-			var size = _link.Receive(ref buf);
+			var size = link.Receive(ref buf);
 			if (size != (int)TransSize.ACKSIZE) return false;
 
-			if(!_checksum.checkChecksum(buf, (int)TransSize.ACKSIZE) ||
-			   buf[(int)TransCHKSUM.SEQNO] != _seqNo ||
+			if(!checksum.checkChecksum(buf, (int)TransSize.ACKSIZE) ||
+			   buf[(int)TransCHKSUM.SEQNO] != seqNo ||
 			   buf[(int)TransCHKSUM.TYPE] != (int)TransType.ACK)
 				return false;
 
-			_seqNo = (byte)((buf[(int)TransCHKSUM.SEQNO] + 1) % 2);
+			seqNo = (byte)((buf[(int)TransCHKSUM.SEQNO] + 1) % 2);
 
 			return true;
 		}
@@ -50,45 +51,59 @@ namespace Transportlaget
 		{
 			var ackBuf = new byte[(int)TransSize.ACKSIZE];
 
-			ackBuf [(int)TransCHKSUM.SEQNO] = (byte)
-				(ackType ? (byte)_buffer [(int)TransCHKSUM.SEQNO] : (byte)(_buffer[(int)TransCHKSUM.SEQNO] + 1) % 2); // Fejl rettet
-			ackBuf [(int)TransCHKSUM.TYPE] = (byte)(int)TransType.ACK;
-			_checksum.calcChecksum (ref ackBuf, (int)TransSize.ACKSIZE);
+            errorCounter2++;
+			if (errorCounter2 == 30) {
+				buffer [12]++;
+			}
 
-			_link.Send(ackBuf, (int)TransSize.ACKSIZE);
+			ackBuf [(int)TransCHKSUM.SEQNO] = (byte)
+				(ackType ? (byte)buffer [(int)TransCHKSUM.SEQNO] : (byte)(buffer[(int)TransCHKSUM.SEQNO] + 1) % 2); // Fejl rettet
+			ackBuf [(int)TransCHKSUM.TYPE] = (byte)(int)TransType.ACK;
+			checksum.calcChecksum (ref ackBuf, (int)TransSize.ACKSIZE);
+
+			link.Send(ackBuf, (int)TransSize.ACKSIZE);
 		}
 
 		public void send(byte[] buf, int size)
 		{
-			Array.Copy (buf, 0, _buffer, 4, size);
-			_buffer [(int)TransCHKSUM.TYPE] = 0;
-			_buffer [(int)TransCHKSUM.SEQNO] = _seqNo;
+			Array.Copy (buf, 0, buffer, 4, size);
+			buffer [(int)TransCHKSUM.TYPE] = 0;
+			buffer [(int)TransCHKSUM.SEQNO] = seqNo;
 
-			_checksum.calcChecksum (ref _buffer, size +4);
+			checksum.calcChecksum (ref buffer, size +4);
 			do {
-				_link.Send (_buffer, size + 4);
+                errorCounter++;
+                if (errorCounter == 30)
+                {
+					buffer [120]++;	//Laver en fejl i bufferen
+				}
+                if (errorCounter == 31)
+                {
+					buffer[120]--;	//Retter fejlen tilbage igen
+				}
+				link.Send (buffer, size + 4);
 			} while (!receiveAck());
 		}
 
 		public int receive (ref byte[] buf)
 		{
 		    while (true) {
-				var size = _link.Receive (ref _buffer);
+				var size = link.Receive (ref buffer);
 
-				if (_buffer[(int)TransCHKSUM.SEQNO] == _oldSeqNo)
+				if (buffer[(int)TransCHKSUM.SEQNO] == oldSeqNo)
 				{
 					sendAck (true);
 					return 0;
 				}
 
-				if (_checksum.checkChecksum (_buffer, size) && _buffer[(int)TransCHKSUM.SEQNO] != _oldSeqNo) {
-					_oldSeqNo = _buffer[(int)TransCHKSUM.SEQNO];
-					Array.Copy (_buffer, 4, buf, 0, size-4);
+				if (checksum.checkChecksum (buffer, size) && buffer[(int)TransCHKSUM.SEQNO] != oldSeqNo) {
+					oldSeqNo = buffer[(int)TransCHKSUM.SEQNO];
+					Array.Copy (buffer, 4, buf, 0, size-4);
 					sendAck (true);
 					return size - 4;
 				} else {
 					sendAck (false);
-					_errorCount += 1;
+					errorCount += 1;
 				}
 			}
 		}
