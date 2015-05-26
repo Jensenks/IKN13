@@ -19,8 +19,9 @@ namespace Transportlaget
 		private int errorCount;
         private const int DEFAULT_SEQNO = 2;
 
-	    private int errorCounter;
-	    private int errorCounter2;
+	    private int countToError;
+	    private int countToError2;
+
 		public Transport (int BUFSIZE)
 		{
 			link = new Link(BUFSIZE+(int)TransSize.ACKSIZE);
@@ -51,8 +52,9 @@ namespace Transportlaget
 		{
 			var ackBuf = new byte[(int)TransSize.ACKSIZE];
 
-            errorCounter2++;
-			if (errorCounter2 == 30) {
+            countToError++;
+            if (countToError == 30)
+            {
 				buffer [12]++;
 			}
 
@@ -72,12 +74,12 @@ namespace Transportlaget
 
 			checksum.calcChecksum (ref buffer, size +4);
 			do {
-                errorCounter++;
-                if (errorCounter == 30)
+                countToError2++;
+                if (countToError2 == 30)
                 {
 					buffer [120]++;	//Laver en fejl i bufferen
 				}
-                if (errorCounter == 31)
+                if (countToError2 == 31)
                 {
 					buffer[120]--;	//Retter fejlen tilbage igen
 				}
